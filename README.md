@@ -1,7 +1,7 @@
 # liquid_level
 automation of water level in a tank using sensors as well as timing
 
-Here is the circuit diagram:
+<h3>Circuit diagram:</h3>
 
 <img src="https://github.com/Vishal1419/liquid_level/blob/master/circuit-diagram.png?raw=true"> </img>
 
@@ -9,7 +9,7 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
 
 <img src="https://github.com/Vishal1419/liquid_level/blob/master/Water%20Level%20Liquid%20Sensor%20Float%20Switch%20normally%20OPEN%20type.jpg?raw=true"> </img>
 
-And at last here is the arduino code:
+<h3> Arduino Code: </h3>
 
     #include <LiquidCrystal.h>
 
@@ -90,3 +90,27 @@ And at last here is the arduino code:
         counter++;
       }
     }
+
+<h3> Connections: </h3>
+
+1. P - Phase of Mains supply
+2. N - Neutral of Mains supply
+3. RLY1/CO - P2 of Motor Starter
+4. RLY1/NO - P3 of Motor Starter 
+5. RLY2/CO - one end of big green switch of Motor starter
+6. RLY2/NO - another end of big green switch of Motor starter
+7. D10 - one end of Down sensor
+8. D11 - one end of Up sensor
+9. +5V - another ends of Up and Down sensors
+
+<b>Assumptions</b>
+
+1. Difference between P and N is 230V
+2. RLY1 is continuousRelay
+3. RLY2 is suddenRelay
+
+<h3>Tasks completed:</h3>
+
+When Sensors SW1 and SW2 both have their rings down, the motor starts. When both of these sensors have their ringss up, motor stops.
+Also, if the auto-off time is reached then motor should stop automatically ignoring the values of sensors.
+If the motor is turned off ignoring the sensor values, then motor will never start automatically until SW3 is turned off and turned on again.
