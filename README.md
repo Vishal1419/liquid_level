@@ -161,3 +161,4 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
 When Sensors SW1 and SW2 both have their rings down, the motor starts. When both of these sensors have their ringss up, motor stops.
 Also, if the auto-off time is reached then motor should stop automatically ignoring the values of sensors.
 If the motor is turned off ignoring the sensor values, then motor will never start automatically until SW3 is turned off and turned on again.
+When there is no water in tank and motor stops after set time is elapsed, the buzzer should play a melody, so that user is notified that there is no water in the tank, which means motor does not pull any water from bore and so no water in the tank.
