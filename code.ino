@@ -19,6 +19,7 @@
 
 //include LCD library
 #include <LiquidCrystal.h>
+#include "pitches.h"
 
 //Initialize an LCD object
 /*Pins should be mentioned in this order:
@@ -30,18 +31,31 @@
   Data7
 */
 LiquidCrystal lcd(3, 2, 4, 5, 6, 7);
+
 int offTimePin = A0;
 int offTime = 0;
 int upSensor = 11;
 int downSensor = 10;
 int continuousSwitch = 8;
 int suddenSwitch = 9;
+int siren = 12;
 
 unsigned long counter = 0;
 unsigned long motorStartTime = 0;
 unsigned long offTimeInMillis = 0;
 
 String lastValue = "OFF";
+bool motorInterrupt = false;
+
+// notes in the melody:
+int melody[] = {
+  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+};
+
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = {
+  4, 8, 8, 4, 4, 4, 4, 4
+};
 
 void setup()
 {
@@ -50,6 +64,7 @@ void setup()
   pinMode(downSensor, INPUT);
   pinMode(continuousSwitch, OUTPUT);
   pinMode(suddenSwitch, OUTPUT);
+  pinMode(siren, OUTPUT);
 
   digitalWrite(suddenSwitch, LOW);
   digitalWrite(continuousSwitch, LOW);
@@ -72,15 +87,7 @@ void loop()
   lcd.print(String(offTime) + " Min");
 
   unsigned long now = millis();
-  
-  if(counter == 1)
-  {
-    motorStartTime = now;
-    digitalWrite(suddenSwitch, HIGH);
-    delay(1000); //1 Second
-    digitalWrite(suddenSwitch, LOW);
-  }
-
+ 
   /*
   Serial.println("now: " + String(now));
   Serial.println("start time: " + String(digitalRead(motorStartTime)));
@@ -89,7 +96,7 @@ void loop()
   Serial.println("status: " + String(lastValue));
   */
 
-  if((digitalRead(upSensor) == LOW && digitalRead(downSensor) == LOW) || (now - motorStartTime) > (offTimeInMillis))
+  if(digitalRead(upSensor) == LOW && digitalRead(downSensor) == LOW)
   {
     digitalWrite(continuousSwitch, LOW);
     if(lastValue == "ON")
@@ -101,10 +108,10 @@ void loop()
       lastValue = "OFF";
     }
     counter = 0;
+    motorStartTime = now;
   }
-  else if(digitalRead(upSensor) == HIGH && digitalRead(downSensor) == HIGH)
-  {
-    
+  else if((digitalRead(upSensor) == HIGH && digitalRead(downSensor) == HIGH) && motorInterrupt == false)
+  {    
     digitalWrite(continuousSwitch, HIGH);
     if(lastValue == "OFF")
     {
@@ -116,4 +123,52 @@ void loop()
     }
     counter++;
   }
+
+  if(counter == 1)
+  {
+    motorStartTime = now;
+    digitalWrite(suddenSwitch, HIGH);
+    delay(1000); //1 Second
+    digitalWrite(suddenSwitch, LOW);
+  }
+
+  if((now - motorStartTime) > (offTimeInMillis))
+  {
+    digitalWrite(continuousSwitch, LOW);
+    if(lastValue == "ON")
+    {
+      lcd.setCursor(6, 0);
+      lcd.print("   ");
+      lcd.setCursor(6, 0);
+      lcd.print("OFF");
+      lastValue = "OFF";
+    }
+    counter = 0;
+
+    if(digitalRead(downSensor) == HIGH) //No water
+    {
+      motorInterrupt = true;
+      int x = 0;
+      while(x < 2)
+      {
+        // iterate over the notes of the melody:
+        for (int thisNote = 0; thisNote < 8; thisNote++)
+        {
+          // to calculate the note duration, take one second
+          // divided by the note type.
+          //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+          int noteDuration = 1000 / noteDurations[thisNote];
+          tone(siren, melody[thisNote], noteDuration);
+      
+          // to distinguish the notes, set a minimum time between them.
+          // the note's duration + 30% seems to work well:
+          int pauseBetweenNotes = noteDuration * 1.30;
+          delay(pauseBetweenNotes);
+          // stop the tone playing:
+          noTone(siren);
+        }
+      }
+    }
+  }
+
 }
