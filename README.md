@@ -3,7 +3,7 @@ automation of water level in a tank using sensors as well as timing
 
 <h3>Circuit diagram:</h3>
 
-<img src="https://github.com/Vishal1419/liquid_level/blob/master/circuit-diagram.png?raw=true"> </img>
+<img src="https://github.com/Vishal1419/liquid_level/blob/master/circuit-diagram.png"> </img>
 
 Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in below image:
 
