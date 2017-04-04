@@ -12,20 +12,32 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
 <h3> Arduino Code: </h3>
 
     #include <LiquidCrystal.h>
+    #include "pitches.h"
 
     LiquidCrystal lcd(3, 2, 4, 5, 6, 7);
+
     int offTimePin = A0;
     int offTime = 0;
     int upSensor = 11;
     int downSensor = 10;
     int continuousSwitch = 8;
     int suddenSwitch = 9;
+    int siren = 12;
 
     unsigned long counter = 0;
     unsigned long motorStartTime = 0;
     unsigned long offTimeInMillis = 0;
 
     String lastValue = "OFF";
+    bool motorInterrupt = false;
+
+    int melody[] = {
+      NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+    };
+
+    int noteDurations[] = {
+      4, 8, 8, 4, 4, 4, 4, 4
+    };
 
     void setup()
     {
@@ -34,6 +46,7 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
       pinMode(downSensor, INPUT);
       pinMode(continuousSwitch, OUTPUT);
       pinMode(suddenSwitch, OUTPUT);
+      pinMode(siren, OUTPUT);
 
       digitalWrite(suddenSwitch, LOW);
       digitalWrite(continuousSwitch, LOW);
@@ -54,15 +67,7 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
 
       unsigned long now = millis();
 
-      if(counter == 1)
-      {
-        motorStartTime = now;
-        digitalWrite(suddenSwitch, HIGH);
-        delay(1000); //1 Second
-        digitalWrite(suddenSwitch, LOW);
-      }
-
-      if((digitalRead(upSensor) == LOW && digitalRead(downSensor) == LOW) || (now - motorStartTime) > (offTimeInMillis))
+      if(digitalRead(upSensor) == LOW && digitalRead(downSensor) == LOW)
       {
         digitalWrite(continuousSwitch, LOW);
         if(lastValue == "ON")
@@ -74,10 +79,10 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
           lastValue = "OFF";
         }
         counter = 0;
+        motorStartTime = now;
       }
-      else if(digitalRead(upSensor) == HIGH && digitalRead(downSensor) == HIGH)
-      {
-
+      else if((digitalRead(upSensor) == HIGH && digitalRead(downSensor) == HIGH) && motorInterrupt == false)
+      {    
         digitalWrite(continuousSwitch, HIGH);
         if(lastValue == "OFF")
         {
@@ -89,6 +94,48 @@ Switches SW1 and SW2 shown in the above diagram are actually sensors as shown in
         }
         counter++;
       }
+
+      if(counter == 1)
+      {
+        motorStartTime = now;
+        digitalWrite(suddenSwitch, HIGH);
+        delay(1000); //1 Second
+        digitalWrite(suddenSwitch, LOW);
+      }
+
+      if((now - motorStartTime) > (offTimeInMillis))
+      {
+        digitalWrite(continuousSwitch, LOW);
+        if(lastValue == "ON")
+        {
+          lcd.setCursor(6, 0);
+          lcd.print("   ");
+          lcd.setCursor(6, 0);
+          lcd.print("OFF");
+          lastValue = "OFF";
+        }
+        counter = 0;
+
+        if(digitalRead(downSensor) == HIGH) //No water
+        {
+          motorInterrupt = true;
+          int x = 0;
+          while(x < 2)
+          {
+            for (int thisNote = 0; thisNote < 8; thisNote++)
+            {
+              int noteDuration = 1000 / noteDurations[thisNote];
+              tone(siren, melody[thisNote], noteDuration);
+
+              int pauseBetweenNotes = noteDuration * 1.30;
+              delay(pauseBetweenNotes);
+
+              noTone(siren);
+            }
+          }
+        }
+      }
+
     }
 
 <h3> Connections: </h3>
